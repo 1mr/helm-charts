@@ -1,0 +1,38 @@
+{{- if and .Values.pvc.enabled (not .Values.pvc.existingClaim) (eq .Values.pvc.type "pvc")}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fullname" . }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    {{- with .Values.pvc.extraPvcLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.pvc.annotations  }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.pvc.finalizers  }}
+  finalizers:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- range .Values.pvc.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.pvc.size | quote }}
+  {{- if and (.Values.pvc.lookupVolumeName) (lookup "v1" "PersistentVolumeClaim" (include "grafana.fullname" .)) }}
+  volumeName: {{ (lookup "v1" "PersistentVolumeClaim" (include "fullname" .)).spec.volumeName }}
+  {{- end }}
+  {{- with .Values.pvc.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.pvc.selectorLabels }}
+  selector:
+    matchLabels:
+    {{- toYaml . | nindent 6 }}
+  {{- end }}
+{{- end }}

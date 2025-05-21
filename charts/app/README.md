@@ -100,6 +100,13 @@ Change the values according to the need of the environment in ``values.yaml`` fi
 | podSecurityContext.runAsNonRoot | bool | `true` |  |
 | podSecurityContext.runAsUser | int | `1000` |  |
 | prometheus.metrics | bool | `false` |  |
+| pvc.accessModes[0] | string | `"ReadWriteOnce"` |  |
+| pvc.enabled | bool | `false` |  |
+| pvc.extraPvcLabels | object | `{}` |  |
+| pvc.finalizers[0] | string | `"kubernetes.io/pvc-protection"` |  |
+| pvc.size | string | `"10Gi"` |  |
+| pvc.type | string | `"pvc"` |  |
+| pvc.volumeName | string | `""` |  |
 | readinessProbe.path | string | `"/readiness"` |  |
 | readinessProbe.periodSeconds | int | `10` |  |
 | readinessProbe.timeoutSeconds | int | `5` |  |
