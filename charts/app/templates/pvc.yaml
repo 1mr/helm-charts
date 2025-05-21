@@ -24,7 +24,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.pvc.size | quote }}
-  {{- if and (.Values.pvc.lookupVolumeName) (lookup "v1" "PersistentVolumeClaim" (include "grafana.fullname" .)) }}
+  {{- if and (.Values.pvc.lookupVolumeName) (lookup "v1" "PersistentVolumeClaim" (include "fullname" .)) }}
   volumeName: {{ (lookup "v1" "PersistentVolumeClaim" (include "fullname" .)).spec.volumeName }}
   {{- end }}
   {{- with .Values.pvc.storageClassName }}
