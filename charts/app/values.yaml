@@ -1,7 +1,10 @@
 # -- Image to use for deploying
 image:
+  registry: docker.io
   repository: 1am3r/hello-world-koa
   tag: v.0.1
+  digest: ''
+
 imagePullSecrets: []
 
 # -- Name Ovverride

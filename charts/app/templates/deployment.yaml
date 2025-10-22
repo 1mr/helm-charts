@@ -47,7 +47,11 @@ spec:
         - name: {{ include "fullname" . }}
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}@{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
           imagePullPolicy: {{ .Values.imagepullPolicy | default "IfNotPresent" | quote }}
           {{- with .Values.command }}
           command:

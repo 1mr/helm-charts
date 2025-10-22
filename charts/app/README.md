@@ -76,7 +76,7 @@ Change the values according to the need of the environment in ``values.yaml`` fi
 | grpcService.containerPort | int | `50051` |  |
 | grpcService.enabled | bool | `false` |  |
 | grpcService.port | int | `40000` |  |
-| image | object | `{"repository":"1am3r/hello-world-koa","tag":"v.0.1"}` | Image to use for deploying |
+| image | object | `{"digest":"","registry":"docker.io","repository":"1am3r/hello-world-koa","tag":"v.0.1"}` | Image to use for deploying |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | string | `nil` |  |
 | ingress.enabled | bool | `false` |  |
