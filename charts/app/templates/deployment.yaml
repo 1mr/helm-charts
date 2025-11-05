@@ -151,7 +151,11 @@ spec:
         - name: {{ $extraContainer.name | default "container" }}
           securityContext:
              {{- toYaml $extraContainer.podSecurityContext | nindent 12 }}
-          image: "{{ $extraContainer.image.repository }}:{{ $extraContainer.image.tag }}"
+          {{- if $extraContainer.image.digest }}
+          image: "{{ $extraContainer.image.registry }}/{{ $extraContainer.image.repository }}:{{ $extraContainer.image.tag }}@{{ $extraContainer.image.digest }}"
+          {{- else }}
+          image: "{{ $extraContainer.image.registry }}/{{ $extraContainer.image.repository }}:{{ $extraContainer.image.tag }}"
+          {{- end }}
           imagePullPolicy: {{ $extraContainer.imagepullPolicy | default "IfNotPresent" | quote }}
           {{- with $extraContainer.command }}
           command:
