@@ -1,7 +1,7 @@
 apiVersion: v2
 name: promxy
 description: promxy
-version: 0.1.6
+version: 0.1.5
 appVersion: '0.0.75'
 maintainers:
   - name: 1mr

@@ -5,6 +5,10 @@ metadata:
   name: {{ include "fullname" . }}
   labels:
     {{- include "labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
   {{- if not .Values.autoscaling.enabled }}
