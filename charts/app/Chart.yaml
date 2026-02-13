@@ -1,7 +1,7 @@
 apiVersion: v2
 name: app
 description: App Helm chart for Kubernetes
-version: 0.7.3
+version: 0.7.4
 appVersion: '1.0.0'
 maintainers:
   - name: 1mr

@@ -1,11 +1,12 @@
 name: Release Charts
 
 on:
-  workflow_run:
-    workflows: ['Lint']
-    branches: [master]
-    types:
-      - completed
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'charts/**'
 
 jobs:
   release:
