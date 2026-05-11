@@ -37,9 +37,13 @@ spec:
       containers:
       - name: {{ template "name" $ }}
         {{- if $job.image }}
-        image: "{{ $job.image.repository }}:{{ $job.image.tag }}"
+        image: "{{ $job.image.registry }}/{{ $job.image.repository }}:{{ $job.image.tag }}"
         {{- else }}
-        image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+        {{- if $.Values.image.digest }}
+        image: "{{ $.Values.image.registry }}/{{ $.Values.image.repository }}:{{ $.Values.image.tag }}@{{ $.Values.image.digest }}"
+        {{- else }}
+        image: "{{ $.Values.image.registry }}/{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+        {{- end }}
         {{- end }}
         imagePullPolicy: {{ $job.imagePullPolicy | default "IfNotPresent" | quote }}
         envFrom:

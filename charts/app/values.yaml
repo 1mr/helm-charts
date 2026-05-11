@@ -155,6 +155,9 @@ canary:
     # provider: nginx
     analysis: {}
     thresholds: {}
+
+jobs: []
+
 # job:
 #   - name: job-whoami
 #     schedule: "* * * * *"
@@ -173,3 +176,5 @@ canary:
 #       requests:
 #         cpu: 100m
 #         memory: 64Mi
+
+cronjobs: []
