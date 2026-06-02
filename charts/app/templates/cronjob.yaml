@@ -15,18 +15,21 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: {{ $cronjob.backoffLimit | default 1 }}
-      activeDeadlineSeconds: {{ $cronjob.activeDeadlineSeconds | default 60 }}
+      activeDeadlineSeconds: {{ $cronjob.activeDeadlineSeconds | default 300 }}
       template:
         metadata:
           labels:
             release: {{ $.Release.Name }}
             cron: {{ $cronjob.name }}
+            {{- with $.Values.extraLabels }}
+            {{ toYaml . | nindent 12 }}
+            {{- end }}
           annotations:
-          {{- if or $cronjob.env $.Values.application.env }}
-          {{- if $cronjob.env  }}
+          {{- if or (and $cronjob.application $cronjob.application.env) $.Values.application.env }}
+          {{- if (and $cronjob.application $cronjob.application.env) }}
             checksum/cronjobCM: {{ include (print $.Template.BasePath "/cronjobConfigMap.yaml") $ | sha256sum }}
           {{- end }}
-          {{- if and $cronjob.useAppEnv $.Values.application.env }}
+          {{- if and $cronjob.useAppSecret $.Values.application.env }}
             checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
           {{- end }}
           {{- end }}
@@ -40,17 +43,25 @@ spec:
           {{- else }}
           {{ toYaml $.Values.imagePullSecrets | nindent 12 }}
           {{- end }}
+          {{- with $cronjob.initContainers }}
+          initContainers:
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "serviceAccountName" $ }}
+          {{- if $.Values.serviceAccount.autoMountServiceAccountToken }}
+          automountServiceAccountToken: {{ $.Values.serviceAccount.autoMountServiceAccountToken }}
+          {{- end }}
           containers:
           - name: {{ default (include "fullname" $) $cronjob.name }}
-            {{- if $cronjob.image }}
-            image: "{{ $cronjob.image.repository }}:{{ $cronjob.image.tag }}"
-            {{- else }}
-            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-            {{- end }}
+            image: {{ $cronjob.image | default $.Values.image | quote }}
             imagePullPolicy: {{ $cronjob.imagePullPolicy | default "IfNotPresent" | quote }}
             {{- if $cronjob.lifecycle }}
             lifecycle:
               {{- toYaml $cronjob.lifecycle | nindent 14 }}
+            {{- end }}
+            {{- if $cronjob.env }}
+            env:
+            {{- toYaml $cronjob.env | nindent 12 }}
             {{- end }}
             envFrom:
             {{- if or $cronjob.secret $.Values.application.secret }}
@@ -63,8 +74,8 @@ spec:
                 name: {{ $cronjob.secret }}
               {{- end }}
               {{- end }}
-            {{- if or $cronjob.env $.Values.application.env }}
-            {{- if $cronjob.env  }}
+            {{- if or (and $cronjob.application $cronjob.application.env) $.Values.application.env }}
+            {{- if (and $cronjob.application $cronjob.application.env) }}
             - configMapRef:
                 name: {{ $cronjob.name }}
             {{- end }}
