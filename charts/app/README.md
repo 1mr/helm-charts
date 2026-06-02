@@ -71,7 +71,7 @@ Change the values according to the need of the environment in ``values.yaml`` fi
 | canary.nginx.enabled | bool | `false` |  |
 | canary.nginx.header | object | `{}` |  |
 | command | string | `nil` |  |
-| cronjobs | list | `[]` |  |
+| cronjob | list | `[]` |  |
 | env | string | `nil` |  |
 | extraContainer | string | `nil` |  |
 | grpcService.containerPort | int | `50051` |  |
@@ -87,7 +87,7 @@ Change the values according to the need of the environment in ``values.yaml`` fi
 | ingress.ingressClassName | string | `"nginx"` |  |
 | ingress.pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls.enabled | bool | `false` |  |
-| jobs | list | `[]` |  |
+| job | list | `[]` |  |
 | livenessProbe.path | string | `"/healthz"` |  |
 | livenessProbe.periodSeconds | int | `15` |  |
 | livenessProbe.timeoutSeconds | int | `5` |  |

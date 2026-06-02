@@ -156,7 +156,7 @@ canary:
     analysis: {}
     thresholds: {}
 
-jobs: []
+job: []
 
 # job:
 #   - name: job-whoami
@@ -177,4 +177,4 @@ jobs: []
 #         cpu: 100m
 #         memory: 64Mi
 
-cronjobs: []
+cronjob: []

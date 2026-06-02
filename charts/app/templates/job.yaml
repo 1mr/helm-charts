@@ -21,7 +21,7 @@ spec:
   template:
     metadata:
       annotations:
-      {{- if $job.env }}
+      {{- if (and $job.application $job.application.env) }}
         checksum/jobconfigmap: {{ include (print $.Template.BasePath "/jobConfigMap.yaml") $ | sha256sum }}
       {{- end }}
       {{- if and $job.useAppEnv $.Values.application.env }}
@@ -30,22 +30,30 @@ spec:
       {{- with $job.annotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      labels:
+      {{- with $.Values.extraLabels }}
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       imagePullSecrets:
+      {{- if $job.imagePullSecrets }}
       {{ toYaml $job.imagePullSecrets | nindent 8 }}
+      {{- else }}
+      {{ toYaml $.Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       restartPolicy: {{ $job.restartPolicy | default "Never" | quote }}
+      serviceAccountName: {{ include "serviceAccountName" $ }}
+      {{- if $.Values.serviceAccount.autoMountServiceAccountToken }}
+      automountServiceAccountToken: {{ $.Values.serviceAccount.autoMountServiceAccountToken }}
+      {{- end }}
       containers:
       - name: {{ template "name" $ }}
-        {{- if $job.image }}
-        image: "{{ $job.image.registry }}/{{ $job.image.repository }}:{{ $job.image.tag }}"
-        {{- else }}
-        {{- if $.Values.image.digest }}
-        image: "{{ $.Values.image.registry }}/{{ $.Values.image.repository }}:{{ $.Values.image.tag }}@{{ $.Values.image.digest }}"
-        {{- else }}
-        image: "{{ $.Values.image.registry }}/{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-        {{- end }}
-        {{- end }}
+        image: {{ $job.image | default $.Values.image | quote }}
         imagePullPolicy: {{ $job.imagePullPolicy | default "IfNotPresent" | quote }}
+        {{- if $job.env}}
+        env:
+        {{- toYaml $job.env | nindent 8 }}
+        {{- end }}
         envFrom:
         {{- if or $job.secret $.Values.application.secret }}
         {{- if and $job.useAppSecret $.Values.application.secret }}
@@ -61,7 +69,7 @@ spec:
         - configMapRef:
             name: {{ include "fullname" $ }}
         {{- end }}
-        {{- if $job.env  }}
+        {{- if (and $job.application $job.application.env) }}
         - configMapRef:
             name: {{ $job.name }}
         {{- end }}
