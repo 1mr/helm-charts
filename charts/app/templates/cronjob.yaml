@@ -1,8 +1,9 @@
 {{- if .Values.cronjob -}}
 {{- range $cronjob := .Values.cronjob }}
+{{- $globalImage := default dict $.Values.image -}}
 {{- $cronjobImage := default dict $cronjob.image -}}
 {{- $imageCronJobDigest := $cronjobImage.digest -}}
-{{- $imageDigest := (default dict $.Values.image).digest -}}
+{{- $imageDigest := $globalImage.digest -}}
 ---
 apiVersion: {{ template "cronjobs.apiVersion" $ }}
 kind: CronJob
@@ -57,9 +58,9 @@ spec:
           containers:
           - name: {{ default (include "fullname" $) $cronjob.name }}
             {{- if or $imageCronJobDigest $imageDigest }}
-            image: "{{ $cronjobImage.registry | default $.Values.image.registry }}/{{ $cronjobImage.repository | default $.Values.image.repository }}:{{ $cronjobImage.tag | default $.Values.image.tag }}@{{ $cronjobImage.digest | default $.Values.image.digest }}"
+            image: "{{ $cronjobImage.registry | default $globalImage.registry }}/{{ $cronjobImage.repository | default $globalImage.repository }}:{{ $cronjobImage.tag | default $globalImage.tag }}@{{ $cronjobImage.digest | default $globalImage.digest }}"
             {{- else }}
-            image: "{{ $cronjobImage.registry | default $.Values.image.registry }}/{{ $cronjobImage.repository | default $.Values.image.repository }}:{{ $cronjobImage.tag | default $.Values.image.tag }}"
+            image: "{{ $cronjobImage.registry | default $globalImage.registry }}/{{ $cronjobImage.repository | default $globalImage.repository }}:{{ $cronjobImage.tag | default $globalImage.tag }}"
             {{- end }}
             imagePullPolicy: {{ $cronjob.imagePullPolicy | default "IfNotPresent" | quote }}
             {{- if $cronjob.lifecycle }}

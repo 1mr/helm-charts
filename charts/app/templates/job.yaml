@@ -1,8 +1,9 @@
 {{- if .Values.job -}}
 {{- range $job := .Values.job }}
+{{- $globalImage := default dict $.Values.image -}}
 {{- $jobImage := default dict $job.image -}}
 {{- $imageJobDigest := $jobImage.digest -}}
-{{- $imageDigest := (default dict $.Values.image).digest -}}
+{{- $imageDigest := $globalImage.digest -}}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -52,9 +53,9 @@ spec:
       containers:
       - name: {{ template "name" $ }}
         {{- if or $imageJobDigest $imageDigest }}
-        image: "{{ $jobImage.registry | default $.Values.image.registry }}/{{ $jobImage.repository | default $.Values.image.repository }}:{{ $jobImage.tag | default $.Values.image.tag }}@{{ $jobImage.digest | default $.Values.image.digest }}"
+        image: "{{ $jobImage.registry | default $globalImage.registry }}/{{ $jobImage.repository | default $globalImage.repository }}:{{ $jobImage.tag | default $globalImage.tag }}@{{ $jobImage.digest | default $globalImage.digest }}"
         {{- else }}
-        image: "{{ $jobImage.registry | default $.Values.image.registry }}/{{ $jobImage.repository | default $.Values.image.repository }}:{{ $jobImage.tag | default $.Values.image.tag }}"
+        image: "{{ $jobImage.registry | default $globalImage.registry }}/{{ $jobImage.repository | default $globalImage.repository }}:{{ $jobImage.tag | default $globalImage.tag }}"
         {{- end }}
         imagePullPolicy: {{ $job.imagePullPolicy | default "IfNotPresent" | quote }}
         {{- if $job.env}}
