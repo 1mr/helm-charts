@@ -53,7 +53,7 @@ spec:
           {{- end }}
           containers:
           - name: {{ default (include "fullname" $) $cronjob.name }}
-            {{- if .Values.image.digest }}
+            {{- if or $cronjob.image.digest $.Values.image.digest }}
             image: "{{ $cronjob.image.registry | default $.Values.image.registry }}/{{ $cronjob.image.repository | default $.Values.image.repository }}:{{ $cronjob.image.tag | default $.Values.image.tag }}@{{ $cronjob.image.digest | default $.Values.image.digest }}"
             {{- else }}
             image: "{{ $cronjob.image.registry | default $.Values.image.registry }}/{{ $cronjob.image.repository | default $.Values.image.repository }}:{{ $cronjob.image.tag | default $.Values.image.tag }}"
