@@ -53,7 +53,11 @@ spec:
           {{- end }}
           containers:
           - name: {{ default (include "fullname" $) $cronjob.name }}
-            image: {{ $cronjob.image | default $.Values.image | quote }}
+            {{- if .Values.image.digest }}
+            image: "{{ $cronjob.image.registry | default $.Values.image.registry }}/{{ $cronjob.image.repository | default $.Values.image.repository }}:{{ $cronjob.image.tag | default $.Values.image.tag }}@{{ $cronjob.image.digest | default $.Values.image.digest }}"
+            {{- else }}
+            image: "{{ $cronjob.image.registry | default $.Values.image.registry }}/{{ $cronjob.image.repository | default $.Values.image.repository }}:{{ $cronjob.image.tag | default $.Values.image.tag }}"
+            {{- end }}
             imagePullPolicy: {{ $cronjob.imagePullPolicy | default "IfNotPresent" | quote }}
             {{- if $cronjob.lifecycle }}
             lifecycle:

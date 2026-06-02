@@ -48,7 +48,11 @@ spec:
       {{- end }}
       containers:
       - name: {{ template "name" $ }}
-        image: {{ $job.image | default $.Values.image | quote }}
+        {{- if .Values.image.digest }}
+        image: "{{ $job.image.registry | default $.Values.image.registry }}/{{ $job.image.repository | default $.Values.image.repository }}:{{ $job.image.tag | default $.Values.image.tag }}@{{ $job.image.digest | default $.Values.image.digest }}"
+        {{- else }}
+        image: "{{ $job.image.registry | default $.Values.image.registry }}/{{ $job.image.repository | default $.Values.image.repository }}:{{ $job.image.tag | default $.Values.image.tag }}"
+        {{- end }}
         imagePullPolicy: {{ $job.imagePullPolicy | default "IfNotPresent" | quote }}
         {{- if $job.env}}
         env:
