@@ -119,6 +119,7 @@ Change the values according to the need of the environment in ``values.yaml`` fi
 | resources.requests.memory | string | `"64Mi"` |  |
 | secretsStore | object | `{"enabled":false,"parameters":null,"provider":"vault","secretObjects":null}` | Secrets Store CSI Driver |
 | securityContext.runAsNonRoot | bool | `true` |  |
+| service.annotations | object | `{}` |  |
 | service.containerPort | int | `3000` |  |
 | service.enabled | bool | `false` |  |
 | service.port | int | `80` |  |

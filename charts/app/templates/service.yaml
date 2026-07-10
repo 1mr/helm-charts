@@ -5,6 +5,10 @@ metadata:
   name: {{ include "fullname" . }}
   labels:
     {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.service.annotations }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
 spec:
   type: {{ .Values.service.type | default "ClusterIP" | quote }}
   ports:
