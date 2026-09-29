@@ -29,7 +29,7 @@ spec:
         checksum/jobconfigmap: {{ include (print $.Template.BasePath "/jobConfigMap.yaml") $ | sha256sum }}
       {{- end }}
       {{- if and $job.useAppEnv $.Values.application.env }}
-        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        checksum/env: {{ include (print $.Template.BasePath "/envConfigMap.yaml") $ | sha256sum }}
       {{- end }}
       {{- with $job.annotations }}
         {{- toYaml . | nindent 8 }}

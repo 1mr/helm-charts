@@ -83,6 +83,26 @@ Set image as requirement
 {{ required "No image provided" .image }}
 {{- end -}}
 
+{{/*
+Build image reference from a string or a registry/repository/tag/digest dict,
+falling back to the global image dict for unset fields.
+Usage: include "imageRef" (dict "image" $local "global" $.Values.image)
+*/}}
+{{- define "imageRef" -}}
+{{- $global := .global | default dict -}}
+{{- $image := .image | default dict -}}
+{{- if kindIs "string" $image -}}
+{{- $image -}}
+{{- else -}}
+{{- $ref := printf "%s/%s:%s" ($image.registry | default $global.registry) ($image.repository | default $global.repository) (toString ($image.tag | default $global.tag)) -}}
+{{- $digest := ternary $global.digest $image.digest (empty .image) -}}
+{{- if $digest -}}
+{{- $ref = printf "%s@%s" $ref $digest -}}
+{{- end -}}
+{{- $ref -}}
+{{- end -}}
+{{- end -}}
+
 
 {{/*
 Get KubeVersion removing pre-release information.

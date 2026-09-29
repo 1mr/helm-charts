@@ -1,9 +1,5 @@
 {{- if .Values.cronjob -}}
 {{- range $cronjob := .Values.cronjob }}
-{{- $globalImage := default dict $.Values.image -}}
-{{- $cronjobImage := default dict $cronjob.image -}}
-{{- $imageCronJobDigest := $cronjobImage.digest -}}
-{{- $imageDigest := $globalImage.digest -}}
 ---
 apiVersion: {{ template "cronjobs.apiVersion" $ }}
 kind: CronJob
@@ -33,8 +29,8 @@ spec:
           {{- if (and $cronjob.application $cronjob.application.env) }}
             checksum/cronjobCM: {{ include (print $.Template.BasePath "/cronjobConfigMap.yaml") $ | sha256sum }}
           {{- end }}
-          {{- if and $cronjob.useAppSecret $.Values.application.env }}
-            checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+          {{- if and $cronjob.useAppEnv $.Values.application.env }}
+            checksum/env: {{ include (print $.Template.BasePath "/envConfigMap.yaml") $ | sha256sum }}
           {{- end }}
           {{- end }}
           {{- with $cronjob.annotations }}
@@ -57,11 +53,7 @@ spec:
           {{- end }}
           containers:
           - name: {{ default (include "fullname" $) $cronjob.name }}
-            {{- if or $imageCronJobDigest $imageDigest }}
-            image: "{{ $cronjobImage.registry | default $globalImage.registry }}/{{ $cronjobImage.repository | default $globalImage.repository }}:{{ $cronjobImage.tag | default $globalImage.tag }}@{{ $cronjobImage.digest | default $globalImage.digest }}"
-            {{- else }}
-            image: "{{ $cronjobImage.registry | default $globalImage.registry }}/{{ $cronjobImage.repository | default $globalImage.repository }}:{{ $cronjobImage.tag | default $globalImage.tag }}"
-            {{- end }}
+            image: {{ include "imageRef" (dict "image" $cronjob.image "global" $.Values.image) | quote }}
             imagePullPolicy: {{ $cronjob.imagePullPolicy | default "IfNotPresent" | quote }}
             {{- if $cronjob.lifecycle }}
             lifecycle:

@@ -26,7 +26,14 @@ spec:
       {{- if or .Values.application.env .Values.podAnnotations }}
       annotations:
       {{- if .Values.application.env }}
+        checksum/env: {{ include (print $.Template.BasePath "/envConfigMap.yaml") . | sha256sum }}
+      {{- end }}
+      {{- if .Values.configMap }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
+      {{- if .Values.extraContainer }}
+        checksum/extra-env: {{ include (print $.Template.BasePath "/extraEnvConfigMap.yaml") . | sha256sum }}
+        checksum/extra-configmap: {{ include (print $.Template.BasePath "/extraConfigMap.yaml") . | sha256sum }}
       {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -155,36 +162,43 @@ spec:
         - name: {{ $extraContainer.name | default "container" }}
           securityContext:
              {{- toYaml $extraContainer.podSecurityContext | nindent 12 }}
-          {{- if $extraContainer.image.digest }}
-          image: "{{ $extraContainer.image.registry }}/{{ $extraContainer.image.repository }}:{{ $extraContainer.image.tag }}@{{ $extraContainer.image.digest }}"
-          {{- else }}
-          image: "{{ $extraContainer.image.registry }}/{{ $extraContainer.image.repository }}:{{ $extraContainer.image.tag }}"
-          {{- end }}
+          image: {{ include "imageRef" (dict "image" $extraContainer.image "global" $.Values.image) | quote }}
           imagePullPolicy: {{ $extraContainer.imagepullPolicy | default "IfNotPresent" | quote }}
           {{- with $extraContainer.command }}
           command:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with $extraContainer.args }}
+          args:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
           {{- if $extraContainer.lifecycle }}
           lifecycle:
             {{- toYaml $extraContainer.lifecycle | nindent 12 }}
+          {{- end }}
+          {{- if $extraContainer.env }}
+          env:
+          {{- toYaml $extraContainer.env | nindent 10 }}
           {{- end }}
           envFrom:
           {{- if or $extraContainer.secret $.Values.application.secret }}
           {{- if and $extraContainer.useAppSecret $.Values.application.secret }}
           - secretRef:
-            name: {{ $.Values.application.secret }}
+              name: {{ $.Values.application.secret }}
           {{- end }}
           {{- if $extraContainer.secret }}
           - secretRef:
-            name: {{ $extraContainer.secret }}
+              name: {{ $extraContainer.secret }}
           {{- end }}
+          {{- end }}
+          {{- if $extraContainer.envFrom }}
+          {{- toYaml $extraContainer.envFrom | nindent 10 }}
           {{- end }}
           {{- if and $extraContainer.useAppEnv $.Values.application.env }}
           - configMapRef:
               name: {{ include "fullname" $ }}
           {{- end }}
-          {{- if $extraContainer.env }}
+          {{- if and $extraContainer.application $extraContainer.application.env }}
           - configMapRef:
               name: {{ nospace (cat (include "fullname" $) "-" $extraContainer.name) }}
           {{- end }}
@@ -199,11 +213,14 @@ spec:
           startupProbe:
           {{- if eq $extraContainer.startupProbe.type "tcpSocket" }}
             tcpSocket:
-              port: {{ $extraContainer.service.containerPort $extraContainer.startupProbe.port }}
+              port: {{ $extraContainer.startupProbe.port | default (dig "service" "containerPort" nil $extraContainer) }}
           {{- else if eq $extraContainer.startupProbe.type "exec" }}
             exec:
               command:
               {{ toYaml $extraContainer.startupProbe.command | nindent 14 }}
+          {{- else if eq $extraContainer.startupProbe.type "grpc" }}
+            grpc:
+              port: {{ $extraContainer.startupProbe.port | default (dig "grpcService" "containerPort" nil $extraContainer) }}
           {{- else if $extraContainer.startupProbe }}
             httpGet:
               path: {{ $extraContainer.startupProbe.path }}
@@ -223,7 +240,9 @@ spec:
             exec:
               command:
               {{ toYaml $extraContainer.livenessProbe.command | nindent 14 }}
-            {{- end }}
+            {{- else if eq $extraContainer.livenessProbe.type "grpc" }}
+            grpc:
+              port: {{ $extraContainer.livenessProbe.port | default (dig "grpcService" "containerPort" nil $extraContainer) }}
             {{- else }}
             httpGet:
               path: {{ $extraContainer.livenessProbe.path }}
@@ -236,6 +255,7 @@ spec:
             successThreshold: {{ $extraContainer.livenessProbe.successThreshold }}
             failureThreshold: {{ $extraContainer.livenessProbe.failureThreshold }}
           {{- end }}
+          {{- end }}
           {{- if $extraContainer.readinessProbe }}
           readinessProbe:
             {{- if $extraContainer.readinessProbe.type }}
@@ -243,7 +263,9 @@ spec:
             exec:
               command:
               {{ toYaml $extraContainer.readinessProbe.command | nindent 14 }}
-            {{- end }}
+            {{- else if eq $extraContainer.readinessProbe.type "grpc" }}
+            grpc:
+              port: {{ $extraContainer.readinessProbe.port | default (dig "grpcService" "containerPort" nil $extraContainer) }}
             {{- else }}
             httpGet:
               path: {{ $extraContainer.readinessProbe.path }}
@@ -255,6 +277,7 @@ spec:
             timeoutSeconds: {{ $extraContainer.readinessProbe.timeoutSeconds }}
             successThreshold: {{ $extraContainer.readinessProbe.successThreshold }}
             failureThreshold: {{ $extraContainer.readinessProbe.failureThreshold }}
+          {{- end }}
           {{- end }}
           {{- with $extraContainer.volumeMounts }}
           volumeMounts:
@@ -270,6 +293,10 @@ spec:
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints}}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       affinity:

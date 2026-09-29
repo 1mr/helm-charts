@@ -1,0 +1,67 @@
+{{- range $name, $route := .Values.httproute }}
+{{- if $route.enabled }}
+{{- if not (or $route.httpsRedirect $.Values.service.enabled) }}
+{{- fail (printf "httproute.%s: service.enabled must be true, the route backend is the chart Service" $name) }}
+{{- end }}
+{{- if and (eq $name "main") $.Values.canary.flagger.enabled }}
+{{- fail "httproute.main conflicts with canary.flagger: Flagger manages the HTTPRoute named after the Deployment" }}
+{{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  {{- with $route.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+  name: {{ include "fullname" $ }}{{ if ne $name "main" }}-{{ $name }}{{ end }}
+  labels:
+    {{- include "labels" $ | nindent 4 }}
+    {{- with $route.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- with $route.parentRefs }}
+  parentRefs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $route.hostnames }}
+  hostnames:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if $route.additionalRules }}
+    {{- tpl (toYaml $route.additionalRules) $ | nindent 4 }}
+    {{- end }}
+    {{- if $route.httpsRedirect }}
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+    {{- else }}
+    - backendRefs:
+        - name: {{ include "fullname" $ }}
+          port: {{ $route.port | default $.Values.service.port }}
+          group: ''
+          kind: Service
+          weight: 1
+      {{- with $route.filters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $route.matches }}
+      matches:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $route.timeouts }}
+      timeouts:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $route.sessionPersistence }}
+      sessionPersistence:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

@@ -8,8 +8,8 @@ metadata:
 spec:
   revertOnDeletion: true
   skipAnalysis: true
-  {{- if .Values.canary.flager.provider }}
-  provider: {{ .Values.canary.flager.provider }}
+  {{- with .Values.canary.flagger.provider }}
+  provider: {{ . }}
   {{- end }}
   ingressRef:
     apiVersion: networking.k8s.io/v1beta1

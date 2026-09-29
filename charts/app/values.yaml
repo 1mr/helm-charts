@@ -5,10 +5,23 @@ image:
   tag: v.0.1
   digest: ''
 
+imagepullPolicy: IfNotPresent
+
 imagePullSecrets: []
 
 # -- Name Ovverride
 nameOverride: ''
+fullnameOverride: ''
+
+# -- Deployment annotations
+annotations: {}
+# -- Extra labels for job/cronjob pods
+extraLabels: {}
+
+# -- Replicas count (ignored when autoscaling is enabled)
+replicas: 1
+revisionHistoryLimit: 3
+terminationGracePeriodSeconds: 30
 
 application:
   secret:
@@ -19,6 +32,14 @@ env:
   #   valueFrom:
   #     fieldRef:
   #       fieldPath: status.podIP
+
+# -- Rendered as `<fullname>-config` ConfigMap
+configMap: {}
+
+initContainers: []
+
+volumes: []
+volumeMounts: []
 
 service:
   enabled: false
@@ -32,9 +53,13 @@ grpcService:
   port: 40000
   containerPort: 50051
 
-# affinity:
+affinity: {}
 
-# lifecycle:
+podAntiAffinityTopologyKey: kubernetes.io/hostname
+
+topologySpreadConstraints: []
+
+lifecycle: {}
 #   preStop:
 #     exec:
 #       command: ["/bin/sleep", "20"]
@@ -62,6 +87,8 @@ readinessProbe:
   path: '/readiness'
   periodSeconds: 10
   timeoutSeconds: 5
+
+startupProbe: {}
 
 # -- Secrets Store CSI Driver
 secretsStore:
@@ -92,6 +119,7 @@ podSecurityContext:
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
+  maxUnavailable:
 
 podAnnotations: {}
 
@@ -102,18 +130,53 @@ tolerations: []
 pvc:
   type: pvc
   enabled: false
-  # storageClassName: default
+  existingClaim: ''
+  storageClassName: ''
   ## (Optional) Use this to bind the claim to an existing PersistentVolume (PV) by name.
   volumeName: ''
+  ## Reuse volumeName of the already existing PVC
+  lookupVolumeName: false
   accessModes:
     - ReadWriteOnce
   size: 10Gi
-  # annotations: {}
+  annotations: {}
   finalizers:
     - kubernetes.io/pvc-protection
-  # selectorLabels: {}
+  selectorLabels: {}
   ## Extra labels to apply to a PVC.
   extraPvcLabels: {}
+
+# -- Gateway API HTTPRoutes.
+httproute:
+  main:
+    enabled: false
+    hostnames:
+      - lvh.me
+    parentRefs:
+      - name: lb
+        namespace: 'envoy'
+        # sectionName: https
+    # -- Backend Service port, defaults to service.port
+    port:
+    matches:
+      - path:
+          type: PathPrefix
+          value: /
+    # -- Envoy Gateway requires backendRequest <= request
+    timeouts: {}
+    sessionPersistence: {}
+    filters: []
+    additionalRules: []
+    httpsRedirect: false
+  redirect:
+    enabled: false
+    hostnames:
+      - lvh.me
+    parentRefs:
+      - name: lb
+        namespace: 'envoy'
+        sectionName: http
+    httpsRedirect: true
 
 ingress:
   enabled: false
@@ -130,6 +193,9 @@ ingress:
         - '/ok'
   tls:
     enabled: false
+    # -- Defaults to `<fullname>-tls`
+    secretName: ''
+  modSecurity: {}
 
 resources:
   limits:
@@ -144,18 +210,22 @@ prometheus:
 
 command:
 
-extraContainer:
+extraContainer: []
 
 canary:
+  match: []
+  metrics: []
   nginx:
     enabled: false
     cookie: ''
     header: {}
   flagger:
     enabled: false
-    # provider: nginx
+    provider: ''
     analysis: {}
     thresholds: {}
+    metrics: []
+    webhooks: []
 
 job: []
 
